@@ -17,45 +17,53 @@ This project is an Access database designed to manage contacts and QA data for p
 ![image](https://github.com/user-attachments/assets/ab6e1adb-c0a1-42b5-a374-438d7c045371)
 ### Tables
 1. **Sites**
-   - `id` (Primary Key)
-   - `site_name` (Unique)
+   - `id` 
+   - `site_name` (Primary Key)
    - `site_address`
    - `is_current`
 
 2. **Departments**
-   - `id` (Primary Key)
-   - `dept_name` (Unique)
-   - `site` (Foreign Key referencing Sites)
+   - `id` 
+   - `dept_name` (Primary Key)
+   - `site` (Foreign Key)
    - `contact`
    - `contact_number`
    - `contact_email`
    - `is_current`
 
 3. **Scanners**
-   - `id` (Primary Key)
+   - `id` 
    - `scanner_id`
-   - `dept` (Foreign Key referencing Departments)
+   - `dept` (Foreign Key)
    - `brand`
    - `model`
-   - `serial_number` (Unique)
+   - `serial_number` (Primary Key)
    - `loan`
    - `site`
    - `is_current`
 
 4. **Probes**
-   - `id` (Primary Key)
-   - `scanner_id` (Foreign Key referencing Scanners)
+   - `id` 
+   - `scanner_id` (Foreign Key)
    - `dept`
    - `model`
    - `type`
-   - `serial_number` (Unique)
+   - `serial_number` (Primary Key)
    - `loan`
    - `status`
    - `customer_comment`
    - `is_current`
 
 5. **Results**
-   - *Assumed structure based on previous queries; please define as needed.*
+   - `id` (Primary Key)
+   - `date`
+   - `serial_number` 
+   - `qa_cl_rev`
+   - `qa_cl_gn`
+   - `qa_cl_c`
+   - `qa_ph_rev`
+   - `qa_ph_gn`
+   - `phys_comment`
 
 ## Usage
 1. Open the Access database.
