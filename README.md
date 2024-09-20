@@ -4,6 +4,10 @@
 
 This database project is designed to replace multiple spreadsheets for managing contacts and Quality Assurance (QA) data for probes scattered across different departments. The implementation will improve the transparency of reporting and updating contact lists while facilitating quick analysis of QA data. Additionally, it will unify the format of the reports being issued.
 
+The relations of the tables seem linear, however, the project is planned to increase the number of tables and eventually will include the standardized settings per probe model, commissioning results, reactive results. Thus, the schema will be more complex that it is now.
+![image](https://github.com/user-attachments/assets/ab6e1adb-c0a1-42b5-a374-438d7c045371)
+
+
 ## Features
 
 - **Contact Management**: A structured approach to efficiently manage and update contact details.
