@@ -9,6 +9,7 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 
 
+
 Private Sub cboSite_AfterUpdate()
     Dim strSQL As String
     Dim strSiteName As String
@@ -68,14 +69,11 @@ Private Sub cboProbe_AfterUpdate()
     Dim status As String
     Dim cusComm As String
     Dim physComm As String
-    Dim rsAttach As DAO.Recordset2
-    Dim imgField As Field2
-    Dim tempFilePath As String
     Dim boxDate As String
-    
+
     ' Retrieve selected serial number
     probeSerialNumber = Me.cboProbe.Value
-    
+
     ' Define RowSource for each chart
     chart1RowSource = "SELECT [date], [qa_cl_rev] FROM results WHERE [serial_number] = '" & probeSerialNumber & "' ORDER BY [date];"
     chart2RowSource = "SELECT [date], [qa_cl_gn] FROM results WHERE [serial_number] = '" & probeSerialNumber & "' ORDER BY [date];"
@@ -83,7 +81,7 @@ Private Sub cboProbe_AfterUpdate()
     chart4RowSource = "SELECT [date], [qa_ph_rev] FROM results WHERE [serial_number] = '" & probeSerialNumber & "' ORDER BY [date];"
     chart5RowSource = "SELECT [date], [qa_ph_gn] FROM results WHERE [serial_number] = '" & probeSerialNumber & "' ORDER BY [date];"
     chart6RowSource = "SELECT [date], [qa_ph_c] FROM results WHERE [serial_number] = '" & probeSerialNumber & "' ORDER BY [date];"
-    
+
     ' Update RowSource of the charts
     Me.chart_qa_cl_r.RowSource = chart1RowSource
     Me.chart_qa_cl_g.RowSource = chart2RowSource
@@ -91,7 +89,7 @@ Private Sub cboProbe_AfterUpdate()
     Me.chart_qa_ph_r.RowSource = chart4RowSource
     Me.chart_qa_ph_g.RowSource = chart5RowSource
     Me.chart_qa_ph_c.RowSource = chart6RowSource
-    
+
     ' Requery the charts to refresh the data
     Me.chart_qa_cl_r.Requery
     Me.chart_qa_cl_g.Requery
@@ -99,58 +97,48 @@ Private Sub cboProbe_AfterUpdate()
     Me.chart_qa_ph_r.Requery
     Me.chart_qa_ph_g.Requery
     Me.chart_qa_ph_c.Requery
-    
+
     ' Get the latest result for the selected probe
     Set db = CurrentDb
     sql = "SELECT TOP 1 [qa_cl_rev], [qa_cl_gn], [qa_cl_c], [qa_ph_rev], [qa_ph_gn], [qa_ph_c], [phys_comment], [date] " & _
           "FROM results " & _
           "WHERE [serial_number] = '" & probeSerialNumber & "' " & _
           "ORDER BY [date] DESC;"
-    
+
     Set rs = db.OpenRecordset(sql)
-    
+
     If Not rs.EOF Then
         ' Get the result values or assign "N/A" if null
-        qa_cl_rev = Nz(rs!qa_cl_rev, "N/A")
-        qa_cl_gn = Nz(rs!qa_cl_gn, "N/A")
-        qa_cl_c = Nz(rs!qa_cl_c, "N/A")
-        qa_ph_rev = Nz(rs!qa_ph_rev, "N/A")
-        qa_ph_gn = Nz(rs!qa_ph_gn, "N/A")
-        qa_ph_c = Nz(rs!qa_ph_c, "N/A")
-        physComm = Nz(rs!phys_comment, "N/A")
-        boxDate = Nz(rs!date, "N/A")
+        Me.txtqa_cl_rev.Value = Nz(rs!qa_cl_rev, "N/A")
+        Me.txtqa_cl_gn.Value = Nz(rs!qa_cl_gn, "N/A")
+        Me.txtqa_cl_c.Value = Nz(rs!qa_cl_c, "N/A")
+        Me.txtqa_ph_rev.Value = Nz(rs!qa_ph_rev, "N/A")
+        Me.txtqa_ph_gn.Value = Nz(rs!qa_ph_gn, "N/A")
+        Me.txtqa_ph_c.Value = Nz(rs!qa_ph_c, "N/A")
+        Me.txtPhysComm.Value = Nz(rs!phys_comment, "N/A")
+        Me.txtDate.Value = Nz(rs!date, "N/A")
     Else
         ' If no results found, set all values to "N/A"
-        qa_cl_rev = "N/A"
-        qa_cl_gn = "N/A"
-        qa_cl_c = "N/A"
-        qa_ph_rev = "N/A"
-        qa_ph_gn = "N/A"
-        qa_ph_c = "N/A"
-        physComm = "N/A"
-        boxDate = "N/A"
+        Me.txtqa_cl_rev.Value = "N/A"
+        Me.txtqa_cl_gn.Value = "N/A"
+        Me.txtqa_cl_c.Value = "N/A"
+        Me.txtqa_ph_rev.Value = "N/A"
+        Me.txtqa_ph_gn.Value = "N/A"
+        Me.txtqa_ph_c.Value = "N/A"
+        Me.txtPhysComm.Value = "N/A"
+        Me.txtDate.Value = "N/A"
     End If
-    
+
     ' Close the recordset
     rs.Close
-    
-    ' Fill in the text boxes with the retrieved data
-    Me.txtqa_cl_rev.Value = qa_cl_rev
-    Me.txtqa_cl_gn.Value = qa_cl_gn
-    Me.txtqa_cl_c.Value = qa_cl_c
-    Me.txtqa_ph_rev.Value = qa_ph_rev
-    Me.txtqa_ph_gn.Value = qa_ph_gn
-    Me.txtqa_ph_c.Value = qa_ph_c
-    Me.txtPhysComm.Value = physComm
-    Me.txtDate.Value = boxDate
-    
+
     ' Now get the probe status and customer comment from the probes table
     sql = "SELECT model, status, customer_comment " & _
           "FROM probes " & _
           "WHERE serial_number = '" & probeSerialNumber & "';"
-    
+
     Set rs = db.OpenRecordset(sql)
-    
+
     If Not rs.EOF Then
         ' Get the values or set to "N/A"
         model = Nz(rs!model, "N/A")
@@ -162,17 +150,34 @@ Private Sub cboProbe_AfterUpdate()
         status = "N/A"
         cusComm = "N/A"
     End If
-    
+
     ' Close the recordset
     rs.Close
     Set rs = Nothing
     Set db = Nothing
-    
+
     ' Update the form controls with probe info
     Me.txtModel.Value = model
     Me.txtProbeStatus.Value = status
     Me.txtCustComm.Value = cusComm
+
+    ' Update the status option buttons based on the probe status
+    ' First, clear any previous selections
+    Me.optPass.Value = False
+    Me.optAdv.Value = False
+    Me.optFail.Value = False
+
+    ' Now set the correct option button for the current probe's status
+    Select Case status
+        Case "Pass"
+            Me.optPass.Value = True
+        Case "Advisory"
+            Me.optAdv.Value = True
+        Case "Fail"
+            Me.optFail.Value = True
+    End Select
 End Sub
+
 
 Private Sub cboScanner_AfterUpdate()
     Dim strSQL As String
@@ -219,18 +224,20 @@ Private Sub btnSave_Click()
     Dim strSQL As String
     Dim serialNumber As String
     Dim measurementDate As Date
-    Dim qaCLRev As Double
-    Dim qaCLGn As Double
-    Dim qaCLC As Double
-    Dim qaPHRev As Double
-    Dim qaPHGn As Double
-    Dim qaPHC As Double
+    Dim qaCLRev As Variant
+    Dim qaCLGn As Variant
+    Dim qaCLC As Variant
+    Dim qaPHRev As Variant
+    Dim qaPHGn As Variant
+    Dim qaPHC As Variant
     Dim custComm As String
     Dim physComm As String
     Dim status As String
+    Dim rs As DAO.Recordset
+    Dim db As DAO.Database
     
     On Error GoTo ErrorHandler
-    
+
     ' Check if a serial number is selected in cboProbe
     If IsNull(Me.cboProbe) Then
         MsgBox "Please select a probe serial number.", vbExclamation
@@ -240,20 +247,23 @@ Private Sub btnSave_Click()
     ' Retrieve values from form controls
     serialNumber = Me.cboProbe.Value
     measurementDate = Me.txtDate.Value
+
     ' Check for "N/A" and treat it as 0
-    qaCLRev = IIf(Me.txtqa_cl_rev.Value = "N/A", 0, Nz(Me.txtqa_cl_rev.Value, 0))
-    qaCLGn = IIf(Me.txtqa_cl_gn.Value = "N/A", 0, Nz(Me.txtqa_cl_gn.Value, 0))
-    qaCLC = IIf(Me.txtqa_cl_c.Value = "N/A", 0, Nz(Me.txtqa_cl_c.Value, 0))
-    qaPHRev = IIf(Me.txtqa_ph_rev.Value = "N/A", 0, Nz(Me.txtqa_ph_rev.Value, 0))
-    qaPHGn = IIf(Me.txtqa_ph_gn.Value = "N/A", 0, Nz(Me.txtqa_ph_gn.Value, 0))
-    qaPHC = IIf(Me.txtqa_ph_c.Value = "N/A", 0, Nz(Me.txtqa_ph_c.Value, 0))
+    qaCLRev = IIf(Me.txtqa_cl_rev.Value = "N/A" Or Me.txtqa_cl_rev.Value = "", Null, Me.txtqa_cl_rev.Value)
+    qaCLGn = IIf(Me.txtqa_cl_gn.Value = "N/A" Or Me.txtqa_cl_gn.Value = "", Null, Me.txtqa_cl_gn.Value)
+    qaCLC = IIf(Me.txtqa_cl_c.Value = "N/A" Or Me.txtqa_cl_c.Value = "", Null, Me.txtqa_cl_c.Value)
+    qaPHRev = IIf(Me.txtqa_ph_rev.Value = "N/A" Or Me.txtqa_ph_rev.Value = "", Null, Me.txtqa_ph_rev.Value)
+    qaPHGn = IIf(Me.txtqa_ph_gn.Value = "N/A" Or Me.txtqa_ph_gn.Value = "", Null, Me.txtqa_ph_gn.Value)
+    qaPHC = IIf(Me.txtqa_ph_c.Value = "N/A" Or Me.txtqa_ph_c.Value = "", Null, Me.txtqa_ph_c.Value)
+
+
     custComm = Nz(Me.txtCustComm.Value, "")
     physComm = Nz(Me.txtPhysComm.Value, "")
     
     ' Handle single quotes in comments
     custComm = Replace(custComm, "'", "''")
     physComm = Replace(physComm, "'", "''")
-    
+
     ' Determine the new status based on the selected option button
     If Me.optPass.Value = True Then
         status = "Pass"
@@ -265,31 +275,77 @@ Private Sub btnSave_Click()
         MsgBox "Please select a status for the probe.", vbExclamation
         Exit Sub
     End If
+
+    ' Check for duplicate entry in the results table
+    Set db = CurrentDb
+    strSQL = "SELECT * FROM results WHERE [serial_number] = '" & serialNumber & "' " & _
+             "AND [date] = #" & Format(measurementDate, "dd\/mm\/yyyy") & "#;"
+
+    Set rs = db.OpenRecordset(strSQL)
     
-    ' Create the SQL statement to update the status and customer comment in the probes table
-    strSQL = "UPDATE probes SET [status] = '" & status & "', [customers_comm] = '" & custComm & "' WHERE [serial_number] = '" & serialNumber & "';"
-    
-    ' Create the SQL statement
-    strSQL = "INSERT INTO results ([date], [serial_number], [qa_cl_rev], [qa_cl_gn], [qa_cl_c], [qa_ph_rev], [qa_ph_gn], [qa_ph_c], [phys_comment]) " & _
-             "VALUES (#" & Format(measurementDate, "dd\/mm\/yyyy") & "#, '" & serialNumber & "', " & qaCLRev & ", " & qaCLGn & ", " & qaCLC & ", " & qaPHRev & ", " & qaPHGn & ", " & qaPHC & ", '" & physComm & "');"
-    
-    ' Debug: Display the SQL query to check correctness
-    ' MsgBox "SQL Query: " & strSQL
-    
-    ' Execute the SQL statement
+    ' If duplicate is found, notify the user and stop the save operation
+    If Not rs.EOF Then
+        MsgBox "This data already exists in the results table. Duplicate entries are not allowed.", vbExclamation
+        rs.Close
+        Exit Sub
+    End If
+    rs.Close
+
+    ' Update the customer comment and status in the probes table
+    strSQL = "UPDATE probes SET [status] = '" & status & "', [customer_comment] = '" & custComm & "' WHERE [serial_number] = '" & serialNumber & "';"
     CurrentDb.Execute strSQL, dbFailOnError
     
-    ' Update the status in the probes table
-    If Not IsNull(status) Then
-        Set db = CurrentDb
-        strSQL = "UPDATE probes SET status = '" & status & "' WHERE serial_number = '" & serialNumber & "';"
-        db.Execute strSQL, dbFailOnError
+     ' Build the SQL insert statement
+    strSQL = "INSERT INTO results ([date], [serial_number], [qa_cl_rev], [qa_cl_gn], [qa_cl_c], [qa_ph_rev], [qa_ph_gn], [qa_ph_c], [phys_comment]) " & _
+             "VALUES (#" & Format(measurementDate, "dd\/mm\/yyyy") & "#, '" & serialNumber & "', "
+
+    ' Append values, handling Nulls
+    If IsNull(qaCLRev) Then
+        strSQL = strSQL & "Null, "
+    Else
+        strSQL = strSQL & qaCLRev & ", "
     End If
+    
+    If IsNull(qaCLGn) Then
+        strSQL = strSQL & "Null, "
+    Else
+        strSQL = strSQL & qaCLGn & ", "
+    End If
+    
+    If IsNull(qaCLC) Then
+        strSQL = strSQL & "Null, "
+    Else
+        strSQL = strSQL & qaCLC & ", "
+    End If
+    
+    If IsNull(qaPHRev) Then
+        strSQL = strSQL & "Null, "
+    Else
+        strSQL = strSQL & qaPHRev & ", "
+    End If
+    
+    If IsNull(qaPHGn) Then
+        strSQL = strSQL & "Null, "
+    Else
+        strSQL = strSQL & qaPHGn & ", "
+    End If
+    
+    If IsNull(qaPHC) Then
+        strSQL = strSQL & "Null, "
+    Else
+        strSQL = strSQL & qaPHC & ", "
+    End If
+
+    ' Append physComm and finalize the SQL
+    strSQL = strSQL & "'" & physComm & "');"
+
+    ' Execute the insert SQL
+    CurrentDb.Execute strSQL, dbFailOnError
     
     ' Notify the user
     MsgBox "Data saved successfully.", vbInformation
     Exit Sub
-    
+
 ErrorHandler:
     MsgBox "Error " & Err.Number & ": " & Err.Description, vbCritical
 End Sub
@@ -340,6 +396,12 @@ Private Sub btnSearch_Click()
     Dim rs As DAO.Recordset
     Dim strProbeID As String
     Dim strSQL As String
+    Dim chart1RowSource As String
+    Dim chart2RowSource As String
+    Dim chart3RowSource As String
+    Dim chart4RowSource As String
+    Dim chart5RowSource As String
+    Dim chart6RowSource As String
 
     ' Get the probe ID from the text box
     strProbeID = Nz(Me.txtSearchProbe.Value, "")
@@ -352,37 +414,35 @@ Private Sub btnSearch_Click()
 
     ' Set up the database and query
     Set db = CurrentDb
-    
+
     ' Properly escape single quotes in the probe ID (for safety)
     strProbeID = Replace(strProbeID, "'", "''")
 
-    ' SQL query with proper spacing and references
+    ' SQL query to fetch details
     strSQL = "SELECT pro.serial_number, pro.model AS ProbeModel, pro.scanner_id, " & _
              "scan.model AS ScannerModel, dep.dept_name, dep.site, " & _
              "pro.status AS ProbeStatus, pro.customer_comment, " & _
-             "res.phys_comment " & _
+             "res.qa_cl_rev, res.qa_cl_gn, res.qa_cl_c, " & _
+             "res.qa_ph_rev, res.qa_ph_gn, res.qa_ph_c " & _
              "FROM ((probes AS pro " & _
              "INNER JOIN scanners AS scan ON pro.scanner_id = scan.serial_number) " & _
              "INNER JOIN depts AS dep ON scan.dept = dep.dept_name) " & _
              "LEFT JOIN results AS res ON pro.serial_number = res.serial_number " & _
              "WHERE pro.serial_number = '" & strProbeID & "';"
-             
-    ' Debug: Display the SQL query to ensure it's correct
-    ' Debug.Print "SQL Query: " & strSQL
-    
-    ' Open the recordset
+
     On Error GoTo ErrorHandler
+    ' Open the recordset
     Set rs = db.OpenRecordset(strSQL)
-    
+
     ' Check if the recordset is properly opened and not empty
     If rs Is Nothing Then
         MsgBox "Recordset could not be opened.", vbCritical
         Exit Sub
     End If
-    
+
     ' Check if a matching record was found
     If Not rs.EOF Then
-        ' Populate the comboboxes and text boxes with the data
+        ' Populate the form controls with the data
         Me.cboSite.Value = rs!site
         Me.cboDepartment.Value = rs!dept_name
         Me.cboScanner.Value = rs!scanner_id
@@ -391,13 +451,36 @@ Private Sub btnSearch_Click()
         Me.txtModel.Value = rs!ProbeModel
         Me.txtProbeStatus.Value = rs!ProbeStatus
         Me.txtCustComm.Value = rs!customer_comment
-        Me.txtPhysComm.Value = Nz(rs!phys_comment, "")
+        
+        ' Define RowSource for each chart using the actual probe's serial number
+        chart1RowSource = "SELECT [date], [qa_cl_rev] FROM results WHERE [serial_number] = '" & strProbeID & "' ORDER BY [date];"
+        chart2RowSource = "SELECT [date], [qa_cl_gn] FROM results WHERE [serial_number] = '" & strProbeID & "' ORDER BY [date];"
+        chart3RowSource = "SELECT [date], [qa_cl_c] FROM results WHERE [serial_number] = '" & strProbeID & "' ORDER BY [date];"
+        chart4RowSource = "SELECT [date], [qa_ph_rev] FROM results WHERE [serial_number] = '" & strProbeID & "' ORDER BY [date];"
+        chart5RowSource = "SELECT [date], [qa_ph_gn] FROM results WHERE [serial_number] = '" & strProbeID & "' ORDER BY [date];"
+        chart6RowSource = "SELECT [date], [qa_ph_c] FROM results WHERE [serial_number] = '" & strProbeID & "' ORDER BY [date];"
+        
+        ' Update RowSource of the charts
+        Me.chart_qa_cl_r.RowSource = chart1RowSource
+        Me.chart_qa_cl_g.RowSource = chart2RowSource
+        Me.chart_qa_cl_c.RowSource = chart3RowSource
+        Me.chart_qa_ph_r.RowSource = chart4RowSource
+        Me.chart_qa_ph_g.RowSource = chart5RowSource
+        Me.chart_qa_ph_c.RowSource = chart6RowSource
+    
+        ' Requery the charts to update them
+        Me.chart_qa_cl_r.Requery
+        Me.chart_qa_cl_g.Requery
+        Me.chart_qa_cl_c.Requery
+        Me.chart_qa_ph_r.Requery
+        Me.chart_qa_ph_g.Requery
+        Me.chart_qa_ph_c.Requery
     Else
         MsgBox "No probe found with the entered ID.", vbExclamation
     End If
-    
-    ' Close the recordset and clean up
-    rs.Close
+
+    ' Close the recordset
+    If Not rs Is Nothing Then rs.Close
     Set rs = Nothing
     Set db = Nothing
     Exit Sub
@@ -408,7 +491,6 @@ ErrorHandler:
     Set rs = Nothing
     Set db = Nothing
 End Sub
-
 
 Private Sub optPass_AfterUpdate()
     If Me.optPass.Value = True Then
@@ -431,3 +513,69 @@ Private Sub optFail_AfterUpdate()
     End If
 End Sub
 
+Private Sub btnEdit_Click()
+    Dim strSQL As String
+    Dim serialNumber As String
+    Dim measurementDate As Date
+    Dim qaCLRev As Variant
+    Dim qaCLGn As Variant
+    Dim qaCLC As Variant
+    Dim qaPHRev As Variant
+    Dim qaPHGn As Variant
+    Dim qaPHC As Variant
+    Dim custComm As String
+    Dim physComm As String
+    Dim db As DAO.Database
+    
+    On Error GoTo ErrorHandler
+
+    ' Retrieve values from form controls
+    serialNumber = Me.cboProbe.Value
+    measurementDate = Me.txtDate.Value
+
+    ' Retrieve the values from the textboxes, allowing empty fields to be saved as Null
+    qaCLRev = IIf(Me.txtqa_cl_rev.Value = "N/A", Null, Nz(Me.txtqa_cl_rev.Value, Null))
+    qaCLGn = IIf(Me.txtqa_cl_gn.Value = "N/A", Null, Nz(Me.txtqa_cl_gn.Value, Null))
+    qaCLC = IIf(Me.txtqa_cl_c.Value = "N/A", Null, Nz(Me.txtqa_cl_c.Value, Null))
+    qaPHRev = IIf(Me.txtqa_ph_rev.Value = "N/A", Null, Nz(Me.txtqa_ph_rev.Value, Null))
+    qaPHGn = IIf(Me.txtqa_ph_gn.Value = "N/A", Null, Nz(Me.txtqa_ph_gn.Value, Null))
+    qaPHC = IIf(Me.txtqa_ph_c.Value = "N/A", Null, Nz(Me.txtqa_ph_c.Value, Null))
+    
+    ' Handle comments (customer_comment and phys_comment)
+    custComm = Nz(Me.txtCustComm.Value, "")
+    physComm = Nz(Me.txtPhysComm.Value, "")
+    
+    ' Replace single quotes to avoid SQL injection
+    custComm = Replace(custComm, "'", "''")
+    physComm = Replace(physComm, "'", "''")
+
+    ' Open the database connection
+    Set db = CurrentDb
+    
+    ' Update the existing record in the results table, allowing Null values
+    strSQL = "UPDATE results SET " & _
+             "[qa_cl_rev] = " & Nz(qaCLRev, "Null") & ", " & _
+             "[qa_cl_gn] = " & Nz(qaCLGn, "Null") & ", " & _
+             "[qa_cl_c] = " & Nz(qaCLC, "Null") & ", " & _
+             "[qa_ph_rev] = " & Nz(qaPHRev, "Null") & ", " & _
+             "[qa_ph_gn] = " & Nz(qaPHGn, "Null") & ", " & _
+             "[qa_ph_c] = " & Nz(qaPHC, "Null") & ", " & _
+             "[phys_comment] = '" & physComm & "' " & _
+             "WHERE [serial_number] = '" & serialNumber & "' AND [date] = #" & Format(measurementDate, "dd\/mm\/yyyy") & "#;"
+    
+    db.Execute strSQL, dbFailOnError
+    
+    ' Update the customer_comment in the probes table
+    strSQL = "UPDATE probes SET [customer_comment] = '" & custComm & "' " & _
+             "WHERE [serial_number] = '" & serialNumber & "';"
+    
+    db.Execute strSQL, dbFailOnError
+
+    ' Notify the user
+    MsgBox "Record updated successfully.", vbInformation
+
+    Exit Sub
+
+ErrorHandler:
+    MsgBox "Error " & Err.Number & ": " & Err.Description, vbCritical
+End Sub

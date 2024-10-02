@@ -7,6 +7,7 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = True
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
+
 Option Compare Database
 
 Private Sub btnAddSite_Click()
@@ -252,7 +253,7 @@ Private Sub btnAddScan_Click()
     MsgBox "Scanner added successfully.", vbInformation
     
     ' Clear the form for new entry
-    Me.strScanID.Value = ""
+    Me.txtScanID.Value = ""
     Me.txtScanMan.Value = ""
     Me.txtScanMod.Value = ""
     Me.txtScanSerial.Value = ""
@@ -260,7 +261,7 @@ Private Sub btnAddScan_Click()
     Me.cboDepartment.Value = ""
     Me.optLoanScan.Value = False
     
-End Sub
+    Exit Sub
 
 ErrorHandler:
     ' Handle errors and notify the user
@@ -1158,6 +1159,97 @@ Private Sub cboDeptRep_AfterUpdate()
     End If
 End Sub
 
+Private Sub Form_Load()
+    Dim i As Integer
+    ' Clear previous values for cboYear
+    Me.cboYear.RowSourceType = "Value List"
+    Me.cboYear.RowSource = ""
+    
+    ' Populate cboYear with the last 10 years
+    For i = Year(date) To Year(date) - 10 Step -1
+        Me.cboYear.AddItem i
+    Next i
+    
+    ' Clear and populate cboMonth with month names
+    Me.cboMonth.RowSourceType = "Value List"
+    Me.cboMonth.RowSource = "" ' Clear any existing values
+    Me.cboMonth.RowSource = "January;February;March;April;May;June;July;August;September;October;November;December"
+End Sub
+
+
+Private Function GetMonthNumber(monthName As String) As Integer
+    Select Case monthName
+        Case "January": GetMonthNumber = 1
+        Case "February": GetMonthNumber = 2
+        Case "March": GetMonthNumber = 3
+        Case "April": GetMonthNumber = 4
+        Case "May": GetMonthNumber = 5
+        Case "June": GetMonthNumber = 6
+        Case "July": GetMonthNumber = 7
+        Case "August": GetMonthNumber = 8
+        Case "September": GetMonthNumber = 9
+        Case "October": GetMonthNumber = 10
+        Case "November": GetMonthNumber = 11
+        Case "December": GetMonthNumber = 12
+    End Select
+End Function
+
+Private Sub btnSavePDF_Click()
+    Dim reportName As String
+    Dim reporterName As String
+    Dim pdfFileName As String
+    Dim reportYear As String
+    Dim reportMonth As String
+    Dim siteName As String
+    Dim deptName As String
+    Dim chosenFile As String
+
+    On Error GoTo ErrorHandler
+
+    ' Get the selected site, department, month, and year from the combo boxes
+    siteName = Me.cboSiteRep.Value
+    deptName = Me.cboDeptRep.Value
+    reportMonth = GetMonthNumber(Me.cboMonth.Value)
+    reportYear = Me.cboYear.Value
+    
+    ' Prompt the user to enter the reporter's name
+    reporterName = InputBox("Please enter the reporter's name:", "Reporter Name")
+    
+    ' Check if the user has provided the reporter's name
+    If Len(reporterName) = 0 Then
+        MsgBox "You must enter the reporter's name to save the report.", vbExclamation
+        Exit Sub
+    End If
+    
+    ' Define the report name format: "[current year] [current month] [site] [department]"
+    pdfFileName = reportYear & " " & reportMonth & " " & siteName ' Without .pdf extension
+
+    ' Prompt the user for the file path and file name
+    chosenFile = InputBox("Please enter the full file path (including file name) to save the PDF (e.g., Z:\Ultrasound\" & pdfFileName & ".pdf)", "Save PDF As", "Z:\Ultrasound\" & pdfFileName & ".pdf")
+    
+    ' Check if the user has provided a file path
+    If Len(chosenFile) = 0 Then
+        MsgBox "You must provide a file path to save the report.", vbExclamation
+        Exit Sub
+    End If
+    
+    ' Ensure the file name ends with .pdf
+    If Right(chosenFile, 4) <> ".pdf" Then
+        chosenFile = chosenFile & ".pdf"
+    End If
+
+    ' Output the report as a PDF file, using the chosen file path
+    DoCmd.OutputTo acOutputReport, "Monthly QA Report", acFormatPDF, chosenFile
+    
+    ' Notify the user that the file was saved successfully
+    MsgBox "Report saved as PDF successfully in: " & chosenFile, vbInformation
+
+    Exit Sub
+
+ErrorHandler:
+    MsgBox "Error " & Err.Number & ": " & Err.Description, vbCritical
+End Sub
+
 Private Sub btnOpenReport_Click()
     Dim siteName As String
     Dim deptName As String
@@ -1178,28 +1270,10 @@ Private Sub btnOpenReport_Click()
     
     ' Prompt the user to enter their name
     reporterName = InputBox("Please enter your name:", "Reporter Name")
-    
-    ' Build the SQL query dynamically
-    sqlQuery = "SELECT s.serial_number AS ScannerSerialNumber, " & _
-               "s.scanner_id AS ScannerID, p.model AS ProbeModel, " & _
-               "p.serial_number AS ProbeSerialNumber, p.status AS ProbeStatus, " & _
-               "IIf(IsNull(r.ResultSerialNumber), 'No QA received for " & reportMonth & " " & reportYear & "', r.ResultComment) AS CustComments, " & _
-               "d.contact AS DeptContact, '" & reporterName & "' AS ReporterName " & _
-               "FROM ((scanners AS s " & _
-               "INNER JOIN probes AS p ON s.serial_number = p.scanner_id) " & _
-               "LEFT JOIN (SELECT serial_number AS ResultSerialNumber, " & _
-               "customer_comment AS ResultComment " & _
-               "FROM results " & _
-               "WHERE Year(date) = " & reportYear & " " & _
-               "AND Month(date) = " & reportMonth & ") AS r " & _
-               "ON p.serial_number = r.ResultSerialNumber) " & _
-               "INNER JOIN depts AS d ON s.dept = d.dept_name " & _
-               "WHERE d.dept_name = '" & deptName & "' " & _
-               "AND d.site = '" & siteName & "' " & _
-               "AND s.is_current = True " & _
-               "AND p.is_current = True " & _
-               "ORDER BY s.serial_number, p.serial_number;"
-    
+
+    ' Build the SQL query dynamically using a shared function
+    sqlQuery = BuildReportSQL(siteName, deptName, reportMonth, reportYear, reporterName)
+
     ' Close the report if it is already open
     If SysCmd(acSysCmdGetObjectState, acReport, reportName) = acObjStateOpen Then
         DoCmd.Close acReport, reportName, acSaveNo
@@ -1221,37 +1295,26 @@ Private Sub btnOpenReport_Click()
     DoCmd.OpenReport reportName, acViewPreview
 End Sub
 
-
-Private Sub Form_Load()
-    Dim i As Integer
-    ' Clear previous values for cboYear
-    Me.cboYear.RowSourceType = "Value List"
-    Me.cboYear.RowSource = ""
-    
-    ' Populate cboYear with the last 10 years
-    For i = Year(date) To Year(date) - 10 Step -1
-        Me.cboYear.AddItem i
-    Next i
-    
-    ' Clear and populate cboMonth with month names
-    Me.cboMonth.RowSourceType = "Value List"
-    Me.cboMonth.RowSource = "" ' Clear any existing values
-    Me.cboMonth.RowSource = "January;February;March;April;May;June;July;August;September;October;November;December"
-End Sub
-
-Private Function GetMonthNumber(monthName As String) As Integer
-    Select Case monthName
-        Case "January": GetMonthNumber = 1
-        Case "February": GetMonthNumber = 2
-        Case "March": GetMonthNumber = 3
-        Case "April": GetMonthNumber = 4
-        Case "May": GetMonthNumber = 5
-        Case "June": GetMonthNumber = 6
-        Case "July": GetMonthNumber = 7
-        Case "August": GetMonthNumber = 8
-        Case "September": GetMonthNumber = 9
-        Case "October": GetMonthNumber = 10
-        Case "November": GetMonthNumber = 11
-        Case "December": GetMonthNumber = 12
-    End Select
+Private Function BuildReportSQL(siteName As String, deptName As String, reportMonth As String, reportYear As String, reporterName As String) As String
+    ' Build the SQL query dynamically based on provided parameters
+    BuildReportSQL = "SELECT s.serial_number AS ScannerSerialNumber, " & _
+               "s.scanner_id AS ScannerID, p.model AS ProbeModel, " & _
+               "p.serial_number AS ProbeSerialNumber, p.status AS ProbeStatus, " & _
+               "IIf(IsNull(r.ResultSerialNumber), 'No QA received for " & reportMonth & " " & reportYear & "', r.ResultComment) AS CustComments, " & _
+               "d.contact AS DeptContact, '" & reporterName & "' AS ReporterName " & _
+               "FROM ((scanners AS s " & _
+               "INNER JOIN probes AS p ON s.serial_number = p.scanner_id) " & _
+               "LEFT JOIN (SELECT serial_number AS ResultSerialNumber, " & _
+               "customer_comment AS ResultComment " & _
+               "FROM results " & _
+               "WHERE Year(date) = " & reportYear & " " & _
+               "AND Month(date) = " & reportMonth & ") AS r " & _
+               "ON p.serial_number = r.ResultSerialNumber) " & _
+               "INNER JOIN depts AS d ON s.dept = d.dept_name " & _
+               "WHERE d.dept_name = '" & deptName & "' " & _
+               "AND d.site = '" & siteName & "' " & _
+               "AND s.is_current = True " & _
+               "AND p.is_current = True " & _
+               "ORDER BY s.serial_number, p.serial_number;"
 End Function
+
