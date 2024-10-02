@@ -1,38 +1,86 @@
+
+
+
 # QA Data Management Database
 
 ## Overview
-
-This database project is designed to replace multiple spreadsheets for managing contacts and Quality Assurance (QA) data for probes scattered across different departments. The implementation will improve the transparency of reporting and updating contact lists while facilitating quick analysis of QA data. Additionally, it will unify the format of the reports being issued.
+This project is an Access database designed to manage contacts and QA data for probes across different departments. The aim is to enhance reporting transparency, facilitate quick analysis of QA data, and unify report formats.
 
 ## Features
+- **Sites Management**: Add, edit, and manage site information.
+- **Departments Management**: Manage departments with associated contacts.
+- **Scanners and Probes Tracking**: Track scanners and probes, including their details and QA results.
+- **Dynamic Reporting**: Generate reports based on selected parameters, including month and year.
+- **Error Handling**: Built-in error handling to prevent incorrect data entry and handle null values.
 
-- **Contact Management**: A structured approach to efficiently manage and update contact details.
-- **QA Data Analysis**: Quick access to QA data for department probes, enabling better decision-making.
-- **Unified Reporting**: Standardized report formats to enhance clarity and consistency.
-- **User-Friendly Interface**: Easy-to-use forms for data entry and modifications.
-- **Error Handling**: Robust error handling prevents incorrect data entry and ensures data integrity.
+## Database Structure
+![image](https://github.com/user-attachments/assets/ab6e1adb-c0a1-42b5-a374-438d7c045371)
+### Tables
+1. **Sites**
+   - `id` 
+   - `site_name` (Primary Key)
+   - `site_address`
+   - `is_current`
 
-## Getting Started
+2. **Departments**
+   - `id` 
+   - `dept_name` (Primary Key)
+   - `site` (Foreign Key)
+   - `contact`
+   - `contact_number`
+   - `contact_email`
+   - `is_current`
 
-### Prerequisites
+3. **Scanners**
+   - `id` 
+   - `scanner_id`
+   - `dept` (Foreign Key)
+   - `brand`
+   - `model`
+   - `serial_number` (Primary Key)
+   - `loan`
+   - `site`
+   - `is_current`
 
-- Microsoft Access (version X or higher)
-- Basic understanding of relational databases and SQL
+4. **Probes**
+   - `id` 
+   - `scanner_id` (Foreign Key)
+   - `dept`
+   - `model`
+   - `type`
+   - `serial_number` (Primary Key)
+   - `loan`
+   - `status`
+   - `customer_comment`
+   - `is_current`
 
-### Installation
-
-1. **Clone the repository**:
-   ```bash
-   git clone (https://github.com/marigroc/database-project)
-
-2. Open the Access database: Open the .accdb file in Microsoft Access.
-
-3. Set up the database: Ensure all tables and relationships are correctly configured according to the project specifications.
+5. **Results**
+   - `id` (Primary Key)
+   - `date`
+   - `serial_number` 
+   - `qa_cl_rev`
+   - `qa_cl_gn`
+   - `qa_cl_c`
+   - `qa_ph_rev`
+   - `qa_ph_gn`
+   - `phys_comment`
 
 ## Usage
-1. Adding QA results: use the "Monthly QA" tab in qa_form to add results.
-2. Managing Records: Use the "Add/Remove" tab in the qa_monthly form to add, remove, and update site, department, scanner, probe, and contact person information.
-3. Generating Reports: Use the "Report Diesel Generator" tab in the qa-monthly form, and choose the site, department, and date to generate the report.
+1. Open the Access database.
+2. Use the forms to add or manage sites, departments, scanners, and probes.
+3. Generate reports by selecting the desired parameters.
+4. Follow prompts for error handling during data entry.
+
+## Getting Started
+1. Ensure you have Microsoft Access installed.
+2. Download the database file.
+3. Open the file and enable macros if prompted.
+
+## Contributing
+Contributions are welcome! Please fork the repository and submit a pull request with your improvements.
 
 ## License
-This project is licensed under the MIT License.
+This project is licensed under the [MIT License](LICENSE).
+
+## Acknowledgements
+- [Microsoft Access](https://www.microsoft.com/en-us/microsoft-365/access) for database management.
